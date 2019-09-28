@@ -4,8 +4,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.ApplicationInfo;
-import android.content.pm.PackageInfo;
 import android.content.pm.ResolveInfo;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -15,13 +13,12 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.kobra.launcher.R;
-import com.kobra.launcher.Receiver;
 import com.kobra.launcher.adapters.AppsListAdapter;
 import com.kobra.launcher.callbacks.WelcomeCallbacks;
+import com.kobra.launcher.customUI.RollingLayoutManager;
 import com.kobra.launcher.model.AppInfo;
 
 import java.util.ArrayList;
@@ -42,7 +39,7 @@ public class AppsListFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_apps_list,container,false);
+        return inflater.inflate(R.layout.fragment_apps_list, container, false);
     }
 
     @Override
@@ -65,27 +62,32 @@ public class AppsListFragment extends Fragment {
         Objects.requireNonNull(getActivity()).registerReceiver(receiver, intentFilter);
     }
 
-    private void updateList(View view){
-        RecyclerView recyclerView = view.findViewById(R.id.appsListRecyclerView);
+    @Override
+    public void onResume() {
+        super.onResume();
+        updateList(Objects.requireNonNull(getView()));
+    }
 
+    private void updateList(View view) {
+        RecyclerView recyclerView = view.findViewById(R.id.appsListRecyclerView);
         Intent i = new Intent(Intent.ACTION_MAIN, null);
         i.addCategory(Intent.CATEGORY_LAUNCHER);
         List<ResolveInfo> availableApps = Objects.requireNonNull(getActivity()).getPackageManager().queryIntentActivities(i, 0);
         List<AppInfo> apps = new ArrayList<>();
         for (ResolveInfo ri : availableApps)
             if (!ri.loadLabel(getActivity().getPackageManager()).toString().contentEquals("kobraLauncher"))
-                apps.add(new AppInfo(ri.loadLabel(getActivity().getPackageManager()).toString(), ri.activityInfo.packageName, ""));
-
-
+                apps.add(new AppInfo(ri.loadLabel(getActivity().getPackageManager()).toString(), ri.activityInfo.packageName, ri.loadLabel(getActivity().getPackageManager()).toString()));
         Collections.sort(apps);
-
-        AppsListAdapter appsListAdapter = new AppsListAdapter(getContext(), apps, new AppsListAdapter.ItemClickListener() {
+        AppsListAdapter appsListAdapter = new AppsListAdapter(
+                getContext(),
+                apps,
+                new AppsListAdapter.ItemClickListener() {
             @Override
             public void onItemClick(View view, AppInfo info) {
                 startActivity(Objects.requireNonNull(getActivity()).getPackageManager().getLaunchIntentForPackage(info.getAppPackage()));
             }
         });
-        recyclerView.setLayoutManager(new GridLayoutManager(getContext(),5,RecyclerView.VERTICAL,false));
+        recyclerView.setLayoutManager(new RollingLayoutManager(getContext(), 4, RecyclerView.VERTICAL, false));
         recyclerView.setAdapter(appsListAdapter);
     }
 }

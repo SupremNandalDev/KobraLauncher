@@ -1,17 +1,30 @@
 package com.kobra.launcher.model;
 
 import androidx.annotation.NonNull;
+import androidx.room.Entity;
+import androidx.room.PrimaryKey;
 
-public class AppInfo implements Comparable<AppInfo>{
+@Entity(tableName = "apps_info")
+public class AppInfo implements Comparable<AppInfo> {
 
+    @PrimaryKey(autoGenerate = true)
+    private int id;
     private String appTitle;
     private String appPackage;
-    private String appVersion;
+    private String iconTitle;
 
-    public AppInfo(String appTitle, String appPackage, String appVersion) {
+    public AppInfo(String appTitle, String appPackage, String iconTitle) {
         this.appTitle = appTitle;
         this.appPackage = appPackage;
-        this.appVersion = appVersion;
+        this.iconTitle = iconTitle;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
     public String getAppTitle() {
@@ -30,12 +43,12 @@ public class AppInfo implements Comparable<AppInfo>{
         this.appPackage = appPackage;
     }
 
-    public String getAppVersion() {
-        return appVersion;
+    public String getIconTitle() {
+        return iconTitle;
     }
 
-    public void setAppVersion(String appVersion) {
-        this.appVersion = appVersion;
+    public void setIconTitle(String iconTitle) {
+        this.iconTitle = iconTitle;
     }
 
     @Override
