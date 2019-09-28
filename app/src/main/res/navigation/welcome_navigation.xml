@@ -10,4 +10,18 @@
         android:name="com.kobra.launcher.fragments.AppsListFragment"
         android:label=" "
         tools:layout="@layout/fragment_apps_list" />
+    <fragment
+        android:id="@+id/settingFragment"
+        android:name="com.kobra.launcher.fragments.SettingFragment"
+        android:label="Settings"
+        tools:layout="@layout/fragment_settings">
+        <action
+            android:id="@+id/action_settingFragment_to_appsHiddenFragment"
+            app:destination="@id/appsHiddenFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/appsHiddenFragment"
+        android:name="com.kobra.launcher.fragments.AppsHiddenFragment"
+        android:label="Hidden Apps"
+        tools:layout="@layout/fragment_apps_hidden" />
 </navigation>

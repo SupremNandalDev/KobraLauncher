@@ -7,7 +7,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -36,53 +35,34 @@ import java.util.Objects;
 import static com.kobra.launcher.adapters.AppsListAdapter.ItemClickListener;
 import static com.kobra.launcher.adapters.AppsListAdapter.ItemLongClickListener;
 
-public class AppsListFragment extends Fragment implements ItemClickListener, ItemLongClickListener {
-
-    @Nullable
-    @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_apps_list, container, false);
-    }
+public class AppsHiddenFragment extends Fragment implements ItemClickListener, ItemLongClickListener {
 
     private AppInfoDao dao;
     private RecyclerView recyclerView;
-
     private BroadcastReceiver receiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             String packageName = intent.getPackage();
             AppInfo info = dao.getAppInfoByPackage(packageName);
-            if (info == null) {
-                try {
-                    PackageManager packageManager = Objects.requireNonNull(getActivity()).getPackageManager();
-                    assert packageName != null;
-                    String packageTitle = (String) packageManager.getApplicationLabel(packageManager.getApplicationInfo(packageName, PackageManager.GET_META_DATA));
-                    dao.insertAppInfo(new AppInfo(
-                            packageTitle,
-                            packageName,
-                            packageTitle,
-                            false
-                    ));
-                    updateUI();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            } else
+            if (info != null)
                 dao.removeApp(packageName);
             updateUI();
         }
     };
 
+    @Nullable
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        return inflater.inflate(R.layout.fragment_apps_hidden, container, false);
+    }
+
     @Override
     public void onViewCreated(@NonNull final View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         dao = AppInfoDB.getInstance(getContext()).getDataAccessObject();
-        recyclerView = view.findViewById(R.id.appsListRecyclerView);
+        recyclerView = view.findViewById(R.id.appsHiddenRecyclerView);
 
-        if (dao.getAll().size() < 1)
-            doCaching();
         updateUI();
-
         startGettingCalls();
     }
 
@@ -104,28 +84,10 @@ public class AppsListFragment extends Fragment implements ItemClickListener, Ite
     public void onResume() {
         super.onResume();
         updateCachingForRemoved();
-        updateCachingForNewInstalls();
-    }
-
-    private void updateCachingForNewInstalls() {
-        List<AppInfo> tempList = dao.getAll();
-        Intent i = new Intent(Intent.ACTION_MAIN, null);
-        i.addCategory(Intent.CATEGORY_LAUNCHER);
-        List<ResolveInfo> availableApps = Objects.requireNonNull(getActivity()).getPackageManager().queryIntentActivities(i, 0);
-        if ((tempList.size() + 1) < availableApps.size()) {
-            for (ResolveInfo resolveInfo : availableApps) {
-                if (dao.getAppInfoByPackage(resolveInfo.activityInfo.packageName) == null) {
-                    String title = resolveInfo.loadLabel(getActivity().getPackageManager()).toString();
-                    String packageName = resolveInfo.activityInfo.packageName;
-                    dao.insertAppInfo(new AppInfo(title, packageName, title, false));
-                }
-            }
-            updateUI();
-        }
     }
 
     private void updateCachingForRemoved() {
-        List<AppInfo> tempList = dao.getAll();
+        List<AppInfo> tempList = dao.getAllHidden();
         for (AppInfo info : tempList)
             if (!isPackageInstalled(info.getAppPackage()))
                 dao.removeApp(info.getAppPackage());
@@ -133,23 +95,10 @@ public class AppsListFragment extends Fragment implements ItemClickListener, Ite
     }
 
     private void updateUI() {
-        List<AppInfo> appInfo = dao.getAllVisible();
+        List<AppInfo> appInfo = dao.getAllHidden();
         Collections.sort(appInfo);
         recyclerView.setLayoutManager(new RollingLayoutManager(getContext(), new UserPreferences(getActivity()).getLayoutSpan(), RecyclerView.VERTICAL, false));
         recyclerView.setAdapter(new AppsListAdapter(getContext(), appInfo, this, this));
-    }
-
-    private void doCaching() {
-        Intent i = new Intent(Intent.ACTION_MAIN, null);
-        i.addCategory(Intent.CATEGORY_LAUNCHER);
-        List<ResolveInfo> availableApps = Objects.requireNonNull(getActivity()).getPackageManager().queryIntentActivities(i, 0);
-        for (ResolveInfo ri : availableApps)
-            dao.insertAppInfo(new AppInfo(
-                    ri.loadLabel(getActivity().getPackageManager()).toString(),
-                    ri.activityInfo.packageName,
-                    ri.loadLabel(getActivity().getPackageManager()).toString(),
-                    false
-            ));
     }
 
     @Override
@@ -160,8 +109,9 @@ public class AppsListFragment extends Fragment implements ItemClickListener, Ite
     @Override
     public void onItemLongClick(View view, final AppInfo info) {
         Toast.makeText(getContext(), "Long Click Callback Received...", Toast.LENGTH_SHORT).show();
-        String[] appOptions = {"App Info", "Customize", "Hide App", "Uninstall"};
+        String[] appOptions = {"App Info", "Customize", "Show App", "Uninstall"};
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        builder.setTitle("Select");
         builder.setItems(appOptions, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
@@ -176,7 +126,7 @@ public class AppsListFragment extends Fragment implements ItemClickListener, Ite
                 else if (i == 1) {
 
                 } else if (i == 2) {
-                    dao.updateHideStatus(info.getAppPackage(), true);
+                    dao.updateHideStatus(info.getAppPackage(), false);
                     updateUI();
                 } else if (i == 3)
                     startActivity(new Intent(Intent.ACTION_UNINSTALL_PACKAGE, Uri.parse("package:" + info.getAppPackage())));

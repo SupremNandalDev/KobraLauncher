@@ -22,12 +22,14 @@ public class AppsListAdapter extends RecyclerView.Adapter<AppsListAdapter.MyView
     private Context context;
     private List<AppInfo> appInfoList;
     private ItemClickListener itemClickListener;
+    private ItemLongClickListener itemLongClickListener;
     private HashMap<String, Integer> appIcons;
 
-    public AppsListAdapter(Context context, List<AppInfo> appInfoList, ItemClickListener itemClickListener) {
+    public AppsListAdapter(Context context, List<AppInfo> appInfoList, ItemClickListener itemClickListener, ItemLongClickListener itemLongClickListener) {
         this.context = context;
         this.appInfoList = appInfoList;
         this.itemClickListener = itemClickListener;
+        this.itemLongClickListener = itemLongClickListener;
         putDataIntoHashMap();
     }
 
@@ -76,9 +78,8 @@ public class AppsListAdapter extends RecyclerView.Adapter<AppsListAdapter.MyView
     public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
         AppInfo info = appInfoList.get(position);
         holder.textView.setText(info.getAppTitle());
-
         try{
-            holder.imageView.setImageResource(appIcons.get(info.getAppTitle().toLowerCase().trim()));
+            holder.imageView.setImageResource(appIcons.get(info.getIconTitle().toLowerCase().trim()));
         }catch (Exception e){
             e.printStackTrace();
             try {
@@ -98,7 +99,11 @@ public class AppsListAdapter extends RecyclerView.Adapter<AppsListAdapter.MyView
         void onItemClick(View view, AppInfo info);
     }
 
-    class MyViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+    public interface ItemLongClickListener {
+        void onItemLongClick(View view, AppInfo info);
+    }
+
+    class MyViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnLongClickListener {
 
         private ImageView imageView;
         private TextView textView;
@@ -108,11 +113,18 @@ public class AppsListAdapter extends RecyclerView.Adapter<AppsListAdapter.MyView
             imageView = itemView.findViewById(R.id.itemAppListIcon);
             textView = itemView.findViewById(R.id.itemAppListTitle);
             itemView.setOnClickListener(this);
+            itemView.setOnLongClickListener(this);
         }
 
         @Override
         public void onClick(View view) {
             itemClickListener.onItemClick(view, appInfoList.get(getAdapterPosition()));
+        }
+
+        @Override
+        public boolean onLongClick(View view) {
+            itemLongClickListener.onItemLongClick(view, appInfoList.get(getAdapterPosition()));
+            return true;
         }
     }
 }

@@ -9,8 +9,9 @@
         app:actionViewClass="android.widget.SearchView"
         app:showAsAction="always|withText" />
     <item
-        android:id="@+id/settings"
+        android:id="@+id/settingFragment"
         android:icon="@drawable/ic_settings_white"
+        app:showAsAction="always"
         android:title="Settings" />
 
 </menu>

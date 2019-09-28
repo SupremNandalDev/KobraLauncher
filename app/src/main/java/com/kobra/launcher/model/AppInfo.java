@@ -12,11 +12,13 @@ public class AppInfo implements Comparable<AppInfo> {
     private String appTitle;
     private String appPackage;
     private String iconTitle;
+    private boolean hidden;
 
-    public AppInfo(String appTitle, String appPackage, String iconTitle) {
+    public AppInfo(String appTitle, String appPackage, String iconTitle, boolean hidden) {
         this.appTitle = appTitle;
         this.appPackage = appPackage;
         this.iconTitle = iconTitle;
+        this.hidden = hidden;
     }
 
     public int getId() {
@@ -51,14 +53,22 @@ public class AppInfo implements Comparable<AppInfo> {
         this.iconTitle = iconTitle;
     }
 
+    public boolean isHidden() {
+        return hidden;
+    }
+
+    public void setHidden(boolean hidden) {
+        this.hidden = hidden;
+    }
+
     @Override
     public int compareTo(AppInfo info) {
-        return this.getAppTitle().compareTo(info.getAppTitle());
+        return this.getIconTitle().compareTo(info.getIconTitle());
     }
 
     @NonNull
     @Override
     public String toString() {
-        return getAppTitle();
+        return getIconTitle();
     }
 }
